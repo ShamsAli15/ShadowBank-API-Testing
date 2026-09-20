@@ -1,0 +1,1472 @@
+{
+	"info": {
+		"_postman_id": "e88f6ac8-959f-43b8-887c-85ff9f738b32",
+		"name": "Mobile Banking API - Happy & Bad Path Tests",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "56417757",
+		"_collection_link": "https://workshams4-7962588.postman.co/workspace/Shams-Work's-Workspace~185abe2b-1da5-4ce4-8253-6c901bf2f321/collection/56417757-e88f6ac8-959f-43b8-887c-85ff9f738b32?action=share&source=collection_link&creator=56417757"
+	},
+	"item": [
+		{
+			"name": "1. Users",
+			"item": [
+				{
+					"name": "Create User - Happy Scenario",
+					"event": [
+						{
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test(\"Username is returned correctly\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    const username = pm.environment.get(\"username\");",
+									"    pm.expect(jsonData.username).to.eql(username);",
+									"    const userID = jsonData.id;",
+									"    pm.environment.set(\"userID\", userID);",
+									"   ",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							},
+							"listen": "test"
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const username = pm.variables.replaceIn('{{$randomUserName}}');\r",
+									"\r",
+									"pm.environment.set(\"username\",username);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"id\": 0,\r\n    \"username\": \"{{username}}\",\r\n    \"email\": \"{{$randomEmail}}\",\r\n    \"password\": \"Test@1234\",\r\n    \"fullName\": \"Happy Path User\",\r\n    \"phoneNumber\": \"+201234567890\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/users",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"users"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create User - ALL Bad Scenarios",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var baseUrl = pm.collectionVariables.get('baseUrl') || pm.environment.get('baseUrl');",
+									"",
+									"pm.test(\"Username is returned correctly\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    const username = pm.environment.get(\"username\");",
+									"    pm.expect(jsonData.username).to.eql(username);",
+									"    const userID = jsonData.id;",
+									"    pm.environment.set(\"userID\", userID);",
+									"   ",
+									"});",
+									"var ts = Date.now();",
+									"var scenarios = [",
+									"  {name:'Missing username (empty string)', body:{username:'', email:'missuser_'+ts+'@example.com', password:'Test@1234', fullName:'Missing Username Test'}, expected:400},",
+									"  {name:'Missing email (empty string)', body:{username:'missemail_'+ts, email:'', password:'Test@1234', fullName:'Missing Email Test'}, expected:400},",
+									"  {name:'Missing password (empty string)', body:{username:'misspass_'+ts, email:'misspass_'+ts+'@example.com', password:'', fullName:'Missing Password Test'}, expected:400},",
+									"  {name:'Whitespace-only username', body:{username:'   ', email:'wsuser_'+ts+'@example.com', password:'Test@1234', fullName:'Whitespace Username Test'}, expected:400},",
+									"  {name:'Email - No @ symbol', body:{username:'emailtest1_'+ts, email:'invalidemail.com', password:'Test@1234', fullName:'Email Test 1'}, expected:400},",
+									"  {name:'Email - No domain', body:{username:'emailtest2_'+ts, email:'user@', password:'Test@1234', fullName:'Email Test 2'}, expected:400},",
+									"  {name:'Email - No username part', body:{username:'emailtest3_'+ts, email:'@example.com', password:'Test@1234', fullName:'Email Test 3'}, expected:400},",
+									"  {name:'Email - Plain text no domain', body:{username:'emailtest4_'+ts, email:'notanemail', password:'Test@1234', fullName:'Email Test 4'}, expected:400},",
+									"  {name:'Email - No TLD (e.g. user@gmail)', body:{username:'emailtest5_'+ts, email:'emailtest5_'+ts+'@gmail', password:'Test@1234', fullName:'Email Test 5'}, expected:400},",
+									"  {name:'Username - 1 character (below min 3)', body:{username:'a', email:'shortuser1_'+ts+'@example.com', password:'Test@1234', fullName:'Short Username 1'}, expected:400},",
+									"  {name:'Username - 2 characters (below min 3)', body:{username:'ab', email:'shortuser2_'+ts+'@example.com', password:'Test@1234', fullName:'Short Username 2'}, expected:400},",
+									"  {name:'Username - 51 characters (above max 50)', body:{username:'a'.repeat(51), email:'longuser_'+ts+'@example.com', password:'Test@1234', fullName:'Long Username 1'}, expected:400},",
+									"  {name:'[REVIEW] Username - emoji characters', body:{username:'😀testuser😀'+ts, email:'emojiuser_'+ts+'@example.com', password:'Test@1234', fullName:'Emoji Username Test'}, expected:400},",
+									"  {name:'Duplicate username - different case', body:{username:'{{username}}'.toUpperCase(), email:'caseduptest_'+ts+'@example.com', password:'Test@1234', fullName:'Case Duplicate Test'}, expected:400},",
+									"  {name:'Password - 1 character (below min 8)', body:{username:'shortpw1_'+ts, email:'shortpw1_'+ts+'@example.com', password:'1', fullName:'Short Password 1'}, expected:400},",
+									"  {name:'Password - 7 characters (below min 8)', body:{username:'shortpw2_'+ts, email:'shortpw2_'+ts+'@example.com', password:'1234567', fullName:'Short Password 2'}, expected:400},",
+									"  {name:'Password - empty string', body:{username:'shortpw3_'+ts, email:'shortpw3_'+ts+'@example.com', password:'', fullName:'Empty Password'}, expected:400},",
+									"  {name:'Phone - +20 only, no subscriber number', body:{username:'phonetest1_'+ts, email:'phonetest1_'+ts+'@example.com', password:'Test@1234', fullName:'Phone Test 1', phoneNumber:'+20'}, expected:400},",
+									"  {name:'Phone - contains letters', body:{username:'phonetest2_'+ts, email:'phonetest2_'+ts+'@example.com', password:'Test@1234', fullName:'Phone Test 2', phoneNumber:'+20abc4567890'}, expected:400},",
+									"  {name:'Phone - contains spaces', body:{username:'phonetest3_'+ts, email:'phonetest3_'+ts+'@example.com', password:'Test@1234', fullName:'Phone Test 3', phoneNumber:'+20 123 456 7890'}, expected:400},",
+									"  {name:'[SECURITY] SQL Injection in username', body:{username:\"admin'; DROP TABLE users;--\", email:'sqltest_'+ts+'@example.com', password:'Test@1234', fullName:'SQLi Username Test'}, expected:null},",
+									"  {name:'[SECURITY] XSS payload in fullName', body:{username:'xsstest_'+ts, email:'xsstest_'+ts+'@example.com', password:'Test@1234', fullName:'<script>alert(1)</script>'}, expected:null}",
+									"];",
+									"",
+									"scenarios.forEach(function(sc){",
+									"  pm.sendRequest({",
+									"    url: baseUrl + '/api/users',",
+									"    method: 'POST',",
+									"    header: {'Content-Type':'application/json'},",
+									"    body: {mode:'raw', raw: JSON.stringify(sc.body)}",
+									"  }, function(err, res){",
+									"    if (sc.name.indexOf('[SECURITY]') === 0) {",
+									"      pm.test(sc.name + ' -> no 500 error, no DB error leaked', function(){",
+									"        pm.expect(res.code).to.not.equal(500);",
+									"        var text = res.text().toLowerCase();",
+									"        pm.expect(text).to.not.include('sql syntax');",
+									"        pm.expect(text).to.not.include('sqlexception');",
+									"      });",
+									"    } else {",
+									"      pm.test(sc.name + ' -> actual status ' + res.code + ' (expected ' + sc.expected + ')', function(){",
+									"        pm.expect(res.code).to.equal(sc.expected);",
+									"      });",
+									"    }",
+									"  });",
+									"});",
+									"",
+									"pm.test('Status code is 201 (placeholder request itself)', function () { pm.response.to.have.status(201); });"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const username = pm.variables.replaceIn('{{$randomUserName}}');\r",
+									"\r",
+									"pm.environment.set(\"username\",username);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"username\": \"{{username}}\",\r\n  \"email\": \"{{$randomEmail}}\",\r\n    \"password\": \"Test@1234\",\r\n    \"fullName\": \"SHAMS157\",\r\n    \"phoneNumber\": \"+201020455678\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/users",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"users"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Users - Happy Path",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/users",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"users"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get User By ID - Happy Path",
+					"event": [
+						{
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+									"pm.test('Returned user id matches requested id', function () { var json = pm.response.json(); pm.expect(String(json.id)).to.equal(String(pm.collectionVariables.get('userId'))); });"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							},
+							"listen": "test"
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/users/2",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"users",
+								"2"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get User By Username - Happy Path",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/users/username/{{username}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"users",
+								"username",
+								"{{username}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get User - ALL Bad Scenarios (run this ONE request)",
+					"event": [
+						{
+							"script": {
+								"exec": [
+									"var baseUrl = pm.collectionVariables.get('baseUrl') || pm.environment.get('baseUrl');",
+									"var username = pm.collectionVariables.get('username');",
+									"var scenarios = [",
+									"  {name:'Get by ID - Non-existent ID (999999999)', url: baseUrl + '/api/users/999999999', expected:404},",
+									"  {name:'Get by ID - Non-numeric ID (abc)', url: baseUrl + '/api/users/abc', expected:400},",
+									"  {name:'Get by ID - Negative ID (-1)', url: baseUrl + '/api/users/-1', expected:404},",
+									"  {name:'Get by ID - Zero ID (0)', url: baseUrl + '/api/users/0', expected:404},",
+									"  {name:'Get by ID - Decimal ID (1.5)', url: baseUrl + '/api/users/1.5', expected:400},",
+									"  {name:'Get by Username - Non-existent username', url: baseUrl + '/api/users/username/doesnotexist_9999', expected:404},",
+									"  {name:'Get by Username - Empty username segment', url: baseUrl + '/api/users/username/', expected:404},",
+									"  {name:'[SECURITY] Get by Username - SQL Injection payload', url: baseUrl + \"/api/users/username/' OR '1'='1\", expected:null}",
+									"];",
+									"",
+									"scenarios.forEach(function(sc){",
+									"  pm.sendRequest({ url: sc.url, method: 'GET' }, function(err, res){",
+									"    if (sc.name.indexOf('[SECURITY]') === 0) {",
+									"      pm.test(sc.name + ' -> no 500 error, no DB error leaked, no unauthorized data', function(){",
+									"        pm.expect(res.code).to.not.equal(500);",
+									"        var text = res.text().toLowerCase();",
+									"        pm.expect(text).to.not.include('sql syntax');",
+									"        pm.expect(text).to.not.include('sqlexception');",
+									"      });",
+									"    } else {",
+									"      pm.test(sc.name + ' -> actual status ' + res.code + ' (expected ' + sc.expected + ')', function(){",
+									"        pm.expect(res.code).to.equal(sc.expected);",
+									"      });",
+									"    }",
+									"  });",
+									"});",
+									"",
+									"pm.test('Placeholder request runs OK', function () { pm.expect(pm.response.code).to.be.oneOf([200,404]); });"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							},
+							"listen": "test"
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/users",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"users"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update User - Happy Path",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', function () ",
+									"{ pm.response.to.have.status(200); });",
+									"pm.test('Updated fullName reflected', function () ",
+									"{ ",
+									"    var json = pm.response.json(); ",
+									"    pm.expect(json.fullName).to.equal('Updated Full Name'); ",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"username\": \"{{username}}\",\r\n    \"email\": \"updated_{{$timestamp}}@example.com\",\r\n    \"password\": \"NewTest@1234\",\r\n    \"fullName\": \"Updated Full Name\",\r\n    \"phoneNumber\": \"+201111111111\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/users/{{userID}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"users",
+								"{{userID}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update User - ALL Bad Scenarios (run this ONE request)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var baseUrl = pm.collectionVariables.get('baseUrl') || pm.environment.get('baseUrl');",
+									"var userId = pm.collectionVariables.get('userId');",
+									"var ts = Date.now();",
+									"var scenarios = [",
+									"  {name:'[VERIFY] Update - Missing username (empty string)', body:{username:'', email:'putmiss_'+ts+'@example.com', password:'Test@1234', fullName:'PUT Missing Username'}, expected:400},",
+									"  {name:'[VERIFY] Update - Missing email (empty string)', body:{username:'putemail_'+ts, email:'', password:'Test@1234', fullName:'PUT Missing Email'}, expected:400},",
+									"  {name:'Email - No domain', body:{username:'emailtest2_'+ts, email:'user@', password:'Test@1234', fullName:'Email Test 2'}, expected:400},",
+									"  {name:'Email - No username part', body:{username:'emailtest3_'+ts, email:'@example.com', password:'Test@1234', fullName:'Email Test 3'}, expected:400},",
+									"  {name:'Email - Plain text no domain', body:{username:'emailtest4_'+ts, email:'notanemail', password:'Test@1234', fullName:'Email Test 4'}, expected:400},",
+									"  {name:'Email - No TLD (e.g. user@gmail)', body:{username:'emailtest5_'+ts, email:'emailtest5_'+ts+'@gmail', password:'Test@1234', fullName:'Email Test 5'}, expected:400},",
+									"  {name:'[VERIFY] Update - Invalid email format', body:{username:'putemailfmt_'+ts, email:'notanemail', password:'Test@1234', fullName:'PUT Invalid Email'}, expected:400},",
+									"  {name:'[VERIFY] Update - Username below min 3 chars', body:{username:'ab', email:'putshort_'+ts+'@example.com', password:'Test@1234', fullName:'PUT Short Username'}, expected:400},",
+									"  {name:'[VERIFY] Update - Password below min 8 chars', body:{username:'putpw_'+ts, email:'putpw_'+ts+'@example.com', password:'123', fullName:'PUT Short Password'}, expected:400},",
+									"  {name:'[VERIFY] Update non-existent user ID (99999999)', body:{username:'ghostupdate_'+ts, email:'ghost_'+ts+'@example.com', password:'Test@1234', fullName:'Ghost Update'}, expected:400, customUrl: baseUrl + '/api/users/999999999'},",
+									"  {name:'[VERIFY] Update user ID as non-numeric (abc)', body:{username:'nonnumericupdate_'+ts, email:'nn_'+ts+'@example.com', password:'Test@1234', fullName:'Non Numeric ID'}, expected:400, customUrl: baseUrl + '/api/users/abc'},",
+									"  {name:'[SECURITY] SQL Injection in username via PUT', body:{username:\"admin'; DROP TABLE users;--\", email:'putsql_'+ts+'@example.com', password:'Test@1234', fullName:'SQLi PUT Test'}, expected:null},",
+									"  {name:'[SECURITY] XSS payload in fullName via PUT', body:{username:'putxss_'+ts, email:'putxss_'+ts+'@example.com', password:'Test@1234', fullName:'<script>alert(1)</script>'}, expected:null}",
+									"];",
+									"",
+									"scenarios.forEach(function(sc){",
+									"  pm.sendRequest({",
+									"    url: sc.customUrl || (baseUrl + '/api/users/' + userId),",
+									"    method: 'PUT',",
+									"    header: {'Content-Type':'application/json'},",
+									"    body: {mode:'raw', raw: JSON.stringify(sc.body)}",
+									"  }, function(err, res){",
+									"    if (sc.name.indexOf('[SECURITY]') === 0) {",
+									"      pm.test(sc.name + ' -> no 500 error, no DB error leaked', function(){",
+									"        pm.expect(res.code).to.not.equal(500);",
+									"        var text = res.text().toLowerCase();",
+									"        pm.expect(text).to.not.include('sql syntax');",
+									"        pm.expect(text).to.not.include('sqlexception');",
+									"      });",
+									"    } else {",
+									"      pm.test(sc.name + ' -> actual status ' + res.code + ' (expected ' + sc.expected + ')', function(){",
+									"        pm.expect(res.code).to.equal(sc.expected);",
+									"      });",
+									"    }",
+									"  });",
+									"});",
+									"",
+									"pm.test('Status code is 200 (placeholder request itself)', function () { pm.response.to.have.status(200); });"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"username\": \"placeholder_do_not_edit\",\r\n    \"email\": \"placeholder@example.com\",\r\n    \"password\": \"Test@1234\",\r\n    \"fullName\": \"Placeholder - real requests sent from Tests tab\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/users/{{userId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"users",
+								"{{userId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete User - ALL Bad Scenarios (run this ONE request, safe - doesn't touch real data)",
+					"event": [
+						{
+							"script": {
+								"exec": [
+									"var baseUrl = pm.collectionVariables.get('baseUrl') || pm.environment.get('baseUrl');",
+									"var scenarios = [",
+									"  {name:'Delete - Non-existent ID (999999999)', url: baseUrl + '/api/users/999999999', expected:404},",
+									"  {name:'Delete - Non-numeric ID (abc)', url: baseUrl + '/api/users/abc', expected:400},",
+									"  {name:'Delete - Negative ID (-1)', url: baseUrl + '/api/users/-1', expected:404},",
+									"  {name:'Delete - Zero ID (0)', url: baseUrl + '/api/users/0', expected:404},",
+									"  {name:'Get by ID - Decimal ID (1.5)', url: baseUrl + '/api/users/1.5', expected:400},",
+									"  {name:'[SECURITY] Delete with SQL Injection in ID path', url: baseUrl + \"/api/users/1' OR '1'='1\", expected:null}",
+									"];",
+									"",
+									"scenarios.forEach(function(sc){",
+									"  pm.sendRequest({ url: sc.url, method: 'DELETE' }, function(err, res){",
+									"    if (sc.name.indexOf('[SECURITY]') === 0) {",
+									"      pm.test(sc.name + ' -> no 500 error, no DB error leaked, no unintended deletion', function(){",
+									"        pm.expect(res.code).to.not.equal(500);",
+									"        var text = res.text().toLowerCase();",
+									"        pm.expect(text).to.not.include('sql syntax');",
+									"        pm.expect(text).to.not.include('sqlexception');",
+									"      });",
+									"    } else {",
+									"      pm.test(sc.name + ' -> actual status ' + res.code + ' (expected ' + sc.expected + ')', function(){",
+									"        pm.expect(res.code).to.equal(sc.expected);",
+									"      });",
+									"    }",
+									"  });",
+									"});",
+									"",
+									"pm.test('Placeholder request runs OK', function () { pm.expect(pm.response.code).to.be.oneOf([200,404]); });"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							},
+							"listen": "test"
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/users/999999999",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"users",
+								"999999999"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete User - Happy Path (run LAST)",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/users/1",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"users",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Users After Msking Delete",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/users/1",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"users",
+								"1"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "2.Accounts",
+			"item": [
+				{
+					"name": "Create Account - Happy Path",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {\r",
+									"    pm.response.to.have.status(201);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Username is returned correctly\", function () {\r",
+									"    const jsonData = pm.response.json();\r",
+									"    const accountNumber = jsonData.accountNumber;\r",
+									"    const accountID = jsonData.id;\r",
+									"    pm.environment.set(\"accountNumber\", accountNumber);\r",
+									"    pm.environment.set(\"accountID\",accountID);\r",
+									"   \r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"id\": 0,\r\n    \"accountNumber\": \"ACC_{{$timestamp}}\",\r\n    \"userId\": {{userID}},\r\n    \"accountType\": \"SAVINGS\",\r\n    \"balance\": 1000,\r\n    \"creditLimit\": 5000,\r\n    \"status\": \"ACTIVE\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/accounts",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"accounts"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Account - ALL Bad Scenarios",
+					"event": [
+						{
+							"script": {
+								"exec": [
+									"var baseUrl = pm.environment.get('baseUrl');",
+									"var userID = pm.environment.get('userID');",
+									"var ts = Date.now();",
+									"var scenarios = [",
+									"  {name:'Missing accountNumber (empty string)', body:{accountNumber:'', userId:userID, accountType:'SAVINGS', balance:100}, expected:400},",
+									"  {name:'Missing userId (null)', body:{accountNumber:'ACC_MISSUSER_'+ts, userId:null, accountType:'SAVINGS', balance:100}, expected:400},",
+									"  {name:'Non-existent userId (999999999)', body:{accountNumber:'ACC_GHOST_'+ts, userId:999999999, accountType:'SAVINGS', balance:100}, expected:404},",
+									"  {name:'Negative balance', body:{accountNumber:'ACC_NEGBAL_'+ts, userId:userID, accountType:'SAVINGS', balance:-500}, expected:400},",
+									"  {name:'Invalid accountType enum (BITCOIN)', body:{accountNumber:'ACC_BADTYPE_'+ts, userId:userID, accountType:'BITCOIN', balance:100}, expected:400},",
+									"  {name:'accountType lowercase (savings)', body:{accountNumber:'ACC_LOWER_'+ts, userId:userID, accountType:'savings', balance:100}, expected:400},",
+									"  {name:'Negative creditLimit', body:{accountNumber:'ACC_NEGCL_'+ts, userId:userID, accountType:'SAVINGS', balance:100, creditLimit:-1000}, expected:400},",
+									"  {name:'Duplicate accountNumber', body:{accountNumber:pm.environment.get('accountNumber'), userId:userID, accountType:'SAVINGS', balance:100}, expected:400},",
+									"  {name:'[SECURITY] SQL Injection in accountNumber', body:{accountNumber:\"'; DROP TABLE accounts;--\", userId:userID, accountType:'SAVINGS', balance:100}, expected:400},",
+									"  {name:'XSS payload in accountNumber', body:{accountNumber:'<script>alert(1)</script>', userId:userID, accountType:'SAVINGS', balance:100}, expected:400}",
+									"];",
+									"scenarios.forEach(function(sc){",
+									"  pm.sendRequest({",
+									"    url: baseUrl + '/api/accounts',",
+									"    method: 'POST',",
+									"    header: {'Content-Type':'application/json'},",
+									"    body: {mode:'raw', raw: JSON.stringify(sc.body)}",
+									"  }, function(err, res){",
+									"    if (sc.name.indexOf('[SECURITY]') === 0) {",
+									"      pm.test(sc.name + ' -> no 500 error, no DB error leaked', function(){",
+									"        pm.expect(res.code).to.not.equal(500);",
+									"        var text = res.text().toLowerCase();",
+									"        pm.expect(text).to.not.include('sql syntax');",
+									"        pm.expect(text).to.not.include('sqlexception');",
+									"      });",
+									"    } else {",
+									"      pm.test(sc.name + ' -> actual status ' + res.code + ' (expected ' + sc.expected + ')', function(){",
+									"        pm.expect(res.code).to.equal(sc.expected);",
+									"      });",
+									"    }",
+									"  });",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							},
+							"listen": "test"
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/accounts",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"accounts"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Account by Account Number",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 200', function () { pm.response.to.have.status(200); });\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/accounts/number/{{accountNumber}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"accounts",
+								"number",
+								"{{accountNumber}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Account - All Bad Scenarios",
+					"event": [
+						{
+							"script": {
+								"exec": [
+									"var baseUrl = pm.environment.get('baseUrl');",
+									"var scenarios = [",
+									"  {name:'Get by ID - Non-existent (999999999)', url: baseUrl + '/api/accounts/999999999', expected:404},",
+									"  {name:'Get by ID - Non-numeric (abc)', url: baseUrl + '/api/accounts/abc', expected:400},",
+									"  {name:'Get by ID - Negative (-1)', url: baseUrl + '/api/accounts/-1', expected:404},",
+									"  {name:'Get by ID - Zero (0)', url: baseUrl + '/api/accounts/0', expected:404},",
+									"  {name:'Get by ID - Decimal (1.5)', url: baseUrl + '/api/accounts/1.5', expected:400},",
+									"  {name:'Get by Number - Non-existent account number', url: baseUrl + '/api/accounts/number/DOES_NOT_EXIST_999', expected:404},",
+									"  {name:'Get by User ID - Non-existent user (999999999)', url: baseUrl + '/api/accounts/user/999999999', expected:200},",
+									"  {name:'[SECURITY] Get by Number - SQL Injection payload', url: baseUrl + \"/api/accounts/number/' OR '1'='1\", expected:null}",
+									"];",
+									"scenarios.forEach(function(sc){",
+									"  pm.sendRequest({ url: sc.url, method: 'GET' }, function(err, res){",
+									"    if (sc.name.indexOf('[SECURITY]') === 0) {",
+									"      pm.test(sc.name + ' -> no 500 error, no DB error leaked', function(){",
+									"        pm.expect(res.code).to.not.equal(500);",
+									"        var text = res.text().toLowerCase();",
+									"        pm.expect(text).to.not.include('sql syntax');",
+									"        pm.expect(text).to.not.include('sqlexception');",
+									"      });",
+									"    } else {",
+									"      pm.test(sc.name + ' -> actual status ' + res.code + ' (expected ' + sc.expected + ')', function(){",
+									"        pm.expect(res.code).to.equal(sc.expected);",
+									"      });",
+									"    }",
+									"  });",
+									"});"
+								],
+								"type": "text/javascript"
+							},
+							"listen": "test"
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/accounts",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"accounts"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Accounts by User ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/accounts/user/{{userID}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"accounts",
+								"user",
+								"{{userID}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Accounts",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/accounts",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"accounts"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Account by ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// console.log(\"Account ID:\", pm.environment.get(\"accountID\"));"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/accounts/{{accountID}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"accounts",
+								"{{accountID}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Account - Happy Path",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status code is 200\", function () {\r",
+									"    pm.expect(pm.response.code).to.equal(200);\r",
+									"});\r",
+									"\r",
+									"\r",
+									"pm.test(\"Response time is less than 200ms\", function () {\r",
+									"    pm.expect(pm.response.responseTime).to.be.below(200);\r",
+									"});\r",
+									"\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \r\n  \"accountNumber\": \"206411472811\",\r\n  \"userId\": {{userID}},\r\n  \"accountType\": \"SAVINGS\",\r\n  \"balance\": 0,\r\n  \"creditLimit\": 0,\r\n  \"status\": \"ACTIVE\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/accounts/{{accountID}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"accounts",
+								"{{accountID}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Account - ALL Bad Scenarios",
+					"event": [
+						{
+							"script": {
+								"exec": [
+									"var baseUrl = pm.environment.get('baseUrl');",
+									"var accountID = pm.environment.get('accountID');",
+									"var accountNumber = pm.environment.get('accountNumber');",
+									"var userID = pm.environment.get('userID');",
+									"var scenarios = [",
+									"  {name:'[Update - Non-existent account ID (999999999)', body:{accountNumber:'GHOST_ACC', userId:userID, accountType:'SAVINGS', balance:100}, expected:404, customUrl: baseUrl + '/api/accounts/999999999'},",
+									"  {name:'Update - Invalid status enum (ON_HOLD)', body:{accountNumber:accountNumber, userId:userID, accountType:'SAVINGS', balance:100, status:'ON_HOLD'}, expected:400, customUrl: baseUrl + '/api/accounts/' + accountID},",
+									"  {name:'Update - Negative balance', body:{accountNumber:accountNumber, userId:userID, accountType:'SAVINGS', balance:-500}, expected:400, customUrl: baseUrl + '/api/accounts/' + accountID},",
+									"  {name:'Update - Invalid accountType enum', body:{accountNumber:accountNumber, userId:userID, accountType:'BITCOIN', balance:100}, expected:400, customUrl: baseUrl + '/api/accounts/' + accountID},",
+									"  {name:'Update - Non-numeric account ID (abc)', body:{accountNumber:accountNumber, userId:userID, accountType:'SAVINGS', balance:100}, expected:400, customUrl: baseUrl + '/api/accounts/abc'},",
+									"  {name:'[SECURITY] SQL Injection in accountNumber via PUT', body:{accountNumber:\"'; DROP TABLE accounts;--\", userId:userID, accountType:'SAVINGS', balance:100}, expected:null, customUrl: baseUrl + '/api/accounts/' + accountID}",
+									"];",
+									"scenarios.forEach(function(sc){",
+									"  pm.sendRequest({",
+									"    url: sc.customUrl,",
+									"    method: 'PUT',",
+									"    header: {'Content-Type':'application/json'},",
+									"    body: {mode:'raw', raw: JSON.stringify(sc.body)}",
+									"  }, function(err, res){",
+									"    if (sc.name.indexOf('[SECURITY]') === 0) {",
+									"      pm.test(sc.name + ' -> no 500 error, no DB error leaked', function(){",
+									"        pm.expect(res.code).to.not.equal(500);",
+									"        var text = res.text().toLowerCase();",
+									"        pm.expect(text).to.not.include('sql syntax');",
+									"        pm.expect(text).to.not.include('sqlexception');",
+									"      });",
+									"    } else {",
+									"      pm.test(sc.name + ' -> actual status ' + res.code + ' (expected ' + sc.expected + ')', function(){",
+									"        pm.expect(res.code).to.equal(sc.expected);",
+									"      });",
+									"    }",
+									"  });",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							},
+							"listen": "test"
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/accounts/{{accountID}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"accounts",
+								"{{accountID}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Account - ALL Bad Scenarios (safe)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var baseUrl = pm.environment.get('baseUrl');",
+									"var scenarios = [",
+									"  {name:'Delete - Non-existent ID (999999999)', url: baseUrl + '/api/accounts/999999999', expected:404},",
+									"  {name:'Delete - Non-numeric ID (abc)', url: baseUrl + '/api/accounts/abc', expected:400},",
+									"  {name:'[SECURITY] Delete with SQL Injection in ID path', url: baseUrl + \"/api/accounts/1' OR '1'='1\", expected:null}",
+									"];",
+									"scenarios.forEach(function(sc){",
+									"  pm.sendRequest({ url: sc.url, method: 'DELETE' }, function(err, res){",
+									"    if (sc.name.indexOf('[SECURITY]') === 0) {",
+									"      pm.test(sc.name + ' -> no 500 error, no DB error leaked', function(){",
+									"        pm.expect(res.code).to.not.equal(500);",
+									"        var text = res.text().toLowerCase();",
+									"        pm.expect(text).to.not.include('sql syntax');",
+									"        pm.expect(text).to.not.include('sqlexception');",
+									"      });",
+									"    } else {",
+									"      pm.test(sc.name + ' -> actual status ' + res.code + ' (expected ' + sc.expected + ')', function(){",
+									"        pm.expect(res.code).to.equal(sc.expected);",
+									"      });",
+									"    }",
+									"  });",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/accounts",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"accounts"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Account - Happy Path (run LAST)",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/accounts/{{accountID}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"accounts",
+								"{{accountID}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "3.Transactions",
+			"item": [
+				{
+					"name": "Create Transaction - Happy Path",
+					"event": [
+						{
+							"script": {
+								"exec": [
+									"pm.test('Status code is 201', function () ",
+									"{ pm.response.to.have.status(201); ",
+									"});",
+									"pm.test('Response has transaction id', function () ",
+									"{  ",
+									"   const jsonData = pm.response.json();",
+									"   const transactionReference = jsonData.transactionReference; ",
+									"   const transactionsID = jsonData.id;",
+									"  ",
+									"   pm.environment.set('transactionReference',transactionReference); ",
+									"   pm.environment.set('transactionsID',transactionsID );",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							},
+							"listen": "test"
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"id\": 0,\r\n    \"transactionReference\": \"string\",\r\n    \"fromAccountId\": \"{{accountID}}\",\r\n    \"toAccountId\": 0,\r\n    \"amount\": 0.01,\r\n    \"transactionType\": \"DEPOSIT\",\r\n    \"description\": \"string\",\r\n    \"fee\": 0\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/transactions",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"transactions"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Transaction - ALL Bad Scenarios",
+					"event": [
+						{
+							"script": {
+								"exec": [
+									"var baseUrl = pm.environment.get('baseUrl');",
+									"var accountID = pm.environment.get('accountID');",
+									"var scenarios = [",
+									"  {name:'Missing transactionReference (empty string)', body:{transactionReference:'', fromAccountId:accountID, amount:100, transactionType:'DEPOSIT'}, expected:400},",
+									"  {name:'Missing fromAccountId (null)', body:{transactionReference:'TXN_MISSFROM_'+Date.now(), fromAccountId:null, amount:100, transactionType:'DEPOSIT'}, expected:400},",
+									"  {name:'[VERIFY] Negative amount', body:{transactionReference:'TXN_NEGAMT_'+Date.now(), fromAccountId:accountID, amount:-100, transactionType:'DEPOSIT'}, expected:400},",
+									"  {name:'[VERIFY] Zero amount (below documented min 0.01)', body:{transactionReference:'TXN_ZEROAMT_'+Date.now(), fromAccountId:accountID, amount:0, transactionType:'DEPOSIT'}, expected:400},",
+									"  {name:'[VERIFY] Amount as non-numeric string', body:{transactionReference:'TXN_BADAMT_'+Date.now(), fromAccountId:accountID, amount:'abc', transactionType:'DEPOSIT'}, expected:400},",
+									"  {name:'[VERIFY] Non-existent fromAccountId (999999999)', body:{transactionReference:'TXN_GHOSTFROM_'+Date.now(), fromAccountId:999999999, amount:100, transactionType:'DEPOSIT'}, expected:400},",
+									"  {name:'[VERIFY] Invalid transactionType enum (REFUND)', body:{transactionReference:'TXN_BADTYPE_'+Date.now(), fromAccountId:accountID, amount:100, transactionType:'REFUND'}, expected:400},",
+									"  {name:'[VERIFY] transactionType lowercase (deposit)', body:{transactionReference:'TXN_LOWER_'+Date.now(), fromAccountId:accountID, amount:100, transactionType:'deposit'}, expected:400},",
+									"  {name:'[VERIFY] Withdrawal amount exceeding balance', body:{transactionReference:'TXN_OVERDRAW_'+Date.now(), fromAccountId:accountID, amount:999999999, transactionType:'WITHDRAWAL'}, expected:400},",
+									"  {name:'[VERIFY] Negative fee', body:{transactionReference:'TXN_NEGFEE_'+Date.now(), fromAccountId:accountID, amount:100, transactionType:'DEPOSIT', fee:-5}, expected:400},",
+									"  {name:'[VERIFY] Duplicate transactionReference', body:{transactionReference:pm.environment.get('transactionReference'), fromAccountId:accountID, amount:50, transactionType:'DEPOSIT'}, expected:400},",
+									"  {name:'[SECURITY] SQL Injection in transactionReference', body:{transactionReference:\"'; DROP TABLE transactions;--\", fromAccountId:accountID, amount:50, transactionType:'DEPOSIT'}, expected:null},",
+									"  {name:'[SECURITY] XSS payload in description', body:{transactionReference:'TXN_XSS_'+Date.now(), fromAccountId:accountID, amount:50, transactionType:'DEPOSIT', description:'<script>alert(1)</script>'}, expected:null}",
+									"];",
+									"scenarios.forEach(function(sc){",
+									"  pm.sendRequest({",
+									"    url: baseUrl + '/api/transactions',",
+									"    method: 'POST',",
+									"    header: {'Content-Type':'application/json'},",
+									"    body: {mode:'raw', raw: JSON.stringify(sc.body)}",
+									"  }, function(err, res){",
+									"    if (sc.name.indexOf('[SECURITY]') === 0) {",
+									"      pm.test(sc.name + ' -> no 500 error, no DB error leaked', function(){",
+									"        pm.expect(res.code).to.not.equal(500);",
+									"        var text = res.text().toLowerCase();",
+									"        pm.expect(text).to.not.include('sql syntax');",
+									"        pm.expect(text).to.not.include('sqlexception');",
+									"      });",
+									"    } else {",
+									"      pm.test(sc.name + ' -> actual status ' + res.code + ' (expected ' + sc.expected + ')', function(){",
+									"        pm.expect(res.code).to.equal(sc.expected);",
+									"      });",
+									"    }",
+									"  });",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							},
+							"listen": "test"
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/transactions",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"transactions"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Transactions - Happy Path",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/transactions",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"transactions"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Transaction By ID - Happy Path",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/transactions/{{transactionsID}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"transactions",
+								"{{transactionsID}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Transaction By Reference - Happy Path",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/transactions/reference/{{transactionReference}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"transactions",
+								"reference",
+								"{{transactionReference}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Transactions By Account ID - Happy Path",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/transactions/account/{{accountID}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"transactions",
+								"account",
+								"{{accountID}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Transaction - ALL Bad Scenarios",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var baseUrl = pm.environment.get('baseUrl');",
+									"var scenarios = [",
+									"  {name:'Get by ID - Non-existent (999999999)', url: baseUrl + '/api/transactions/999999999', expected:404},",
+									"  {name:'Get by ID - Non-numeric (abc)', url: baseUrl + '/api/transactions/abc', expected:400},",
+									"  {name:'Get by Reference - Non-existent reference', url: baseUrl + '/api/transactions/reference/DOES_NOT_EXIST_999', expected:404},",
+									"  {name:'Get by Account ID - Non-existent account (999999999)', url: baseUrl + '/api/transactions/account/999999999', expected:404},",
+									"  {name:'[SECURITY] Get by Reference - SQL Injection payload', url: baseUrl + \"/api/transactions/reference/' OR '1'='1\", expected:null}",
+									"];",
+									"scenarios.forEach(function(sc){",
+									"  pm.sendRequest({ url: sc.url, method: 'GET' }, function(err, res){",
+									"    if (sc.name.indexOf('[SECURITY]') === 0) {",
+									"      pm.test(sc.name + ' -> no 500 error, no DB error leaked', function(){",
+									"        pm.expect(res.code).to.not.equal(500);",
+									"        var text = res.text().toLowerCase();",
+									"        pm.expect(text).to.not.include('sql syntax');",
+									"        pm.expect(text).to.not.include('sqlexception');",
+									"      });",
+									"    } else {",
+									"      pm.test(sc.name + ' -> actual status ' + res.code + ' (expected ' + sc.expected + ')', function(){",
+									"        pm.expect(res.code).to.equal(sc.expected);",
+									"      });",
+									"    }",
+									"  });",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/transactions",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"transactions"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}
